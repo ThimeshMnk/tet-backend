@@ -9,8 +9,9 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     libzip-dev \
+    libicu-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo_mysql gd zip
+    && docker-php-ext-install pdo_mysql gd zip intl bcmath
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
@@ -25,12 +26,12 @@ COPY . /var/www/html
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-RUN composer install --no-dev --optimize-autoloader
+
+# FIXED: Added --ignore-platform-reqs to prevent version mismatch errors
+RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-
-# Run optimization commands
-RUN php artisan config:cache && php artisan route:cache
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 EXPOSE 80

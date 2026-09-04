@@ -2,3 +2,4 @@ node_modules
 vendor
 .git
 .env
+.phpunit.result.cache
