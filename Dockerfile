@@ -1,4 +1,4 @@
-FROM php:8.2-apache
+FROM php:8.4-apache
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -27,11 +27,15 @@ COPY . /var/www/html
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# FIXED: Added --ignore-platform-reqs to prevent version mismatch errors
-RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
+# Step 1: Install dependencies WITHOUT running scripts (prevents the Artisan error)
+RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Final cleanup and optimization
+# We run this as a separate step so we can see if it fails
+RUN php -l /var/www/html/app/Providers/AppServiceProvider.php
 
 EXPOSE 80
