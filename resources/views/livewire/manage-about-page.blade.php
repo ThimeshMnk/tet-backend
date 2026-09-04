@@ -77,7 +77,7 @@
     <!-- RIGHT PREVIEW -->
     <div class="flex-1 bg-slate-100 p-12 flex flex-col items-center sticky top-0 h-screen">
         <div class="w-full max-w-5xl h-full bg-white rounded-[3rem] shadow-2xl border-[12px] border-slate-900 overflow-hidden relative">
-            <iframe id="preview-iframe" src="http://localhost:3000/about" class="w-full h-full border-none"></iframe>
+            <iframe id="preview-iframe"  src="{{ env('FRONTEND_URL', 'https://tet-frontend.vercel.app') }}/about" class="w-full h-full border-none"></iframe>
         </div>
     </div>
 

@@ -111,7 +111,7 @@
     <!-- RIGHT: THE PREVIEW (IFRAME) -->
    <div class="flex-1 bg-slate-100 p-12 flex flex-col items-center relative overflow-hidden">
         <div class="w-full max-w-5xl aspect-video bg-white rounded-[3rem] shadow-2xl border-[12px] border-slate-900 overflow-hidden relative z-10">
-            <iframe id="preview-iframe" src="http://localhost:3000/" class="w-full h-full border-none"></iframe>
+            <iframe id="preview-iframe" src="{{ env('FRONTEND_URL', 'https://tet-frontend.vercel.app') }}" class="w-full h-full border-none"></iframe>
         </div>
         <div class="mt-8 z-10">
             <p class="text-[9px] font-bold text-emerald-500 uppercase tracking-widest flex items-center gap-2">
