@@ -13,8 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-    $middleware->statefulApi(); // This helps with CORS for SPA/Next.js
-})
+        // 1. Trust Railway's HTTPS reverse proxy (resolves Mixed Content & 419 CSRF errors)
+        $middleware->trustProxies(at: '*');
+
+        // 2. Stateful API for SPA / Next.js
+        $middleware->statefulApi();
+    })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),

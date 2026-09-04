@@ -5,14 +5,14 @@
             <p class="text-slate-400 text-[10px] mt-2 font-bold uppercase tracking-widest">Institutional Identity Management</p>
         </header>
 
-        <form id="about-form" wire:submit.prevent="save" class="space-y-12 pb-20">
+        <form wire:submit.prevent="save" class="space-y-12 pb-20">
             <!-- SECTION 1: HERO -->
             <div class="space-y-6 p-6 bg-white rounded-[2rem] border border-slate-100 shadow-sm">
                 <h3 class="text-[10px] font-black uppercase text-blue-400">01. Hero Header</h3>
                 @include('livewire.partials.trilingual-input', ['label' => 'Top Label', 'key' => 'about_hero_label'])
                 @include('livewire.partials.trilingual-input', ['label' => 'Headline', 'key' => 'about_hero_title'])
                 @include('livewire.partials.trilingual-input', ['label' => 'Description', 'key' => 'about_hero_description'])
-                <input type="file" name="about_hero_image" wire:model="about_hero_image" class="text-[10px]">
+                <input type="file" wire:model="about_hero_image" class="text-[10px]">
             </div>
 
             <!-- SECTION 2: VISION & MISSION -->
@@ -54,7 +54,7 @@
                         @include('livewire.partials.trilingual-input', ['label' => 'Stat 2 Label', 'key' => 'about_leader_stat2_label'])
                     </div>
                 </div>
-                <input type="file" name="about_leader_image" wire:model="about_leader_image" class="text-[10px]">
+                <input type="file" wire:model="about_leader_image" class="text-[10px]">
             </div>
 
             <!-- SECTION 5: PARTNERSHIPS -->
@@ -77,47 +77,16 @@
     <!-- RIGHT PREVIEW -->
     <div class="flex-1 bg-slate-100 p-12 flex flex-col items-center sticky top-0 h-screen">
         <div class="w-full max-w-5xl h-full bg-white rounded-[3rem] shadow-2xl border-[12px] border-slate-900 overflow-hidden relative">
-            <iframe id="about-preview-iframe" src="{{ config('app.frontend_url', env('FRONTEND_URL', 'https://tet-frontend.vercel.app')) }}/about" class="w-full h-full border-none"></iframe>
+            <iframe id="preview-iframe"  src="{{ env('FRONTEND_URL', 'https://tet-frontend.vercel.app') }}/about" class="w-full h-full border-none"></iframe>
         </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('about-form');
-            const iframe = document.getElementById('about-preview-iframe');
-
-            function syncPreview(customState = null) {
-                if (!iframe || !iframe.contentWindow) return;
-                let state = customState || {};
-
-                if (!customState && form) {
-                    const inputs = form.querySelectorAll('input, textarea, select');
-                    inputs.forEach(input => {
-                        const key = input.name || input.getAttribute('wire:model') || input.getAttribute('wire:model.live');
-                        if (key) {
-                            if (input.type === 'file' && input.files && input.files[0]) {
-                                state[key] = URL.createObjectURL(input.files[0]);
-                            } else if (input.type !== 'file') {
-                                state[key] = input.value;
-                            }
-                        }
-                    });
-                }
-                iframe.contentWindow.postMessage({ type: 'TET_LIVE_PREVIEW', page: 'about', state }, '*');
+        window.addEventListener('content-updated', event => {
+            const iframe = document.getElementById('preview-iframe');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage({ type: 'TET_LIVE_PREVIEW', state: event.detail.state }, '*');
             }
-
-            if (form) {
-                form.addEventListener('input', () => syncPreview());
-                form.addEventListener('change', () => syncPreview());
-            }
-
-            if (iframe) {
-                iframe.addEventListener('load', () => syncPreview());
-            }
-
-            window.addEventListener('content-updated', event => {
-                syncPreview(event.detail?.state || event.detail);
-            });
         });
     </script>
 </div>
