@@ -13,10 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // 1. Trust Railway's HTTPS reverse proxy (resolves Mixed Content & 419 CSRF errors)
         $middleware->trustProxies(at: '*');
-
-        // 2. Stateful API for SPA / Next.js
         $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
