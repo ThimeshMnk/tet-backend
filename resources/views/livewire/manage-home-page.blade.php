@@ -211,57 +211,62 @@
     </div>
 
     <!-- SCRIPT FOR AUTOMATIC SECTION & SLIDE SCROLLING -->
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const iframe = document.getElementById('preview-iframe');
+   <script>
+(function() {
+    const getIframe = () => document.getElementById('preview-iframe');
 
-        function sendScroll(sectionId, slideIndex = null) {
-            if (!iframe || !iframe.contentWindow) return;
+    function sendScroll(sectionId, slideIndex = null) {
+        const iframe = getIframe();
+        if (!iframe || !iframe.contentWindow) return;
 
-            iframe.contentWindow.postMessage({
-                type: 'TET_SCROLL_TO_SECTION',
-                sectionId: sectionId,
-                slideIndex: slideIndex
-            }, '*');
+        console.log('📤 [Admin -> Next.js] Requesting scroll to:', sectionId, 'slide:', slideIndex);
+
+        iframe.contentWindow.postMessage({
+            type: 'TET_SCROLL_TO_SECTION',
+            sectionId: sectionId,
+            slideIndex: slideIndex
+        }, '*');
+    }
+
+    // 1. GLOBAL EVENT DELEGATION (Never gets destroyed by Livewire DOM morphing)
+    document.addEventListener('focusin', function(e) {
+        const container = e.target.closest('[data-section]');
+        if (container) {
+            const sectionId = container.getAttribute('data-section');
+            const slideItem = e.target.closest('[data-slide]');
+            const slideIdx = slideItem ? parseInt(slideItem.getAttribute('data-slide'), 10) : null;
+            sendScroll(sectionId, slideIdx);
         }
-
-        // Delegate click & focusin so re-rendered inputs never lose their listeners
-        document.addEventListener('focusin', (e) => {
-            const container = e.target.closest('[data-section]');
-            if (container) {
-                const sectionId = container.getAttribute('data-section');
-                const slideItem = e.target.closest('[data-slide]');
-                const slideIdx = slideItem ? parseInt(slideItem.getAttribute('data-slide'), 10) : null;
-                sendScroll(sectionId, slideIdx);
-            }
-        });
-
-        document.addEventListener('click', (e) => {
-            const container = e.target.closest('[data-section]');
-            if (container) {
-                const sectionId = container.getAttribute('data-section');
-                const slideItem = e.target.closest('[data-slide]');
-                const slideIdx = slideItem ? parseInt(slideItem.getAttribute('data-slide'), 10) : null;
-                sendScroll(sectionId, slideIdx);
-            }
-        });
-
-        // Whenever Livewire finishes updating
-        window.addEventListener('content-updated', event => {
-            const detail = event.detail?.[0] || event.detail;
-            if (iframe && iframe.contentWindow && detail?.state) {
-                // 1. Update text/images
-                iframe.contentWindow.postMessage({
-                    type: 'TET_LIVE_PREVIEW',
-                    state: detail.state
-                }, '*');
-
-                // 2. Scroll to section being edited
-                if (detail.targetSection) {
-                    sendScroll(detail.targetSection, detail.slideIndex);
-                }
-            }
-        });
     });
+
+    document.addEventListener('click', function(e) {
+        const container = e.target.closest('[data-section]');
+        if (container) {
+            const sectionId = container.getAttribute('data-section');
+            const slideItem = e.target.closest('[data-slide]');
+            const slideIdx = slideItem ? parseInt(slideItem.getAttribute('data-slide'), 10) : null;
+            sendScroll(sectionId, slideIdx);
+        }
+    });
+
+    // 2. LIVEWIRE STATE UPDATE DISPATCHER
+    window.addEventListener('content-updated', function(event) {
+        const iframe = getIframe();
+        const detail = event.detail?.[0] || event.detail;
+
+        if (iframe && iframe.contentWindow && detail?.state) {
+            // Stream content to Next.js
+            iframe.contentWindow.postMessage({
+                type: 'TET_LIVE_PREVIEW',
+                state: detail.state
+            }, '*');
+
+            // Scroll if target section is present
+            if (detail.targetSection) {
+                sendScroll(detail.targetSection, detail.slideIndex);
+            }
+        }
+    });
+})();
 </script>
 </div>
