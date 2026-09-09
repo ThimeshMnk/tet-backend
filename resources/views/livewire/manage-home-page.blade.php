@@ -194,21 +194,7 @@
     </div>
 
     <!-- RIGHT: PREVIEW (IFRAME) -->
-    <div class="flex-1 bg-slate-100 p-8 lg:p-12 flex flex-col items-center justify-center relative overflow-hidden">
-        <div class="w-full max-w-5xl h-[85vh] bg-white rounded-[2.5rem] shadow-2xl border-[10px] border-slate-900 overflow-hidden relative z-10">
-            <iframe 
-                id="preview-iframe" 
-                src="{{ env('FRONTEND_URL', 'https://tet-frontend.vercel.app') }}" 
-                class="w-full h-full border-none"
-            ></iframe>
-        </div>
-        <div class="mt-4 z-10 flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
-            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                Section & Slide Tracking Preview Active
-            </span>
-        </div>
-    </div>
+     <x-preview-panel :url="env('FRONTEND_URL', 'https://tet-frontend.vercel.app')" />
 
     <!-- SCRIPT FOR AUTOMATIC SECTION & SLIDE SCROLLING -->
    <script>

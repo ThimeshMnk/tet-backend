@@ -14,13 +14,13 @@ class SettingController extends Controller
             $rawData = $item->getRawOriginal('value');
             $decoded = json_decode($rawData, true);
 
-            // If the field is a JSON object with translations
-            if (is_array($decoded)) {
+            // If it's a JSON array or object (translations or impact_cards)
+           if ($decoded !== null) {
                 return [$item->key => $decoded];
             }
 
-            // If it's a simple string (like an image path or plain URL)
-            return [$item->key => $item->value];
+            // If it's a simple string (image path or URL), return the raw string directly
+             return [$item->key => trim($rawData, '"\'')];
         });
 
         return response()->json($settings);

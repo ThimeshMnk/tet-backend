@@ -11,27 +11,41 @@ class ManageProjectsPage extends Component
     use WithFileUploads;
 
     public $state = [];
-    public $images = []; 
+    public $images = []; // Holds uploaded files: e.g. images['pj_1_img1']
     public $existing = [];
 
     protected $textKeys = [
-        'pj_hero_label', 'pj_hero_title', 'pj_hero_desc',
-        // Project 1
-        'pj1_cat', 'pj1_title1', 'pj1_title2', 'pj1_p1', 'pj1_p2', 'pj1_status_label', 'pj1_status_val', 'pj1_progress',
-        // Project 2
-        'pj2_cat', 'pj2_title1', 'pj2_title2', 'pj2_desc', 'pj2_stat1_val', 'pj2_stat1_label', 'pj2_stat2_val', 'pj2_stat2_label',
-        // Footer
-        'pj_footer_title', 'pj_footer_desc'
+        // Hero
+        'pj_hero_label', 'pj_hero_title1', 'pj_hero_title2', 'pj_hero_desc',
+        // CTA
+        'pj_cta_title', 'pj_cta_desc'
     ];
 
-    public function mount() {
-        foreach ($this->textKeys as $key) { $this->loadKey($key); }
-        
-        $imgKeys = ['pj1_img', 'pj2_img'];
-        foreach($imgKeys as $k) { $this->existing[$k] = Setting::where('key', $k)->first()?->value; }
+    public function mount()
+    {
+        // 1. Base text keys
+        foreach ($this->textKeys as $key) { 
+            $this->loadKey($key); 
+        }
+
+        // 2. Load 4 Projects (Text fields + 3 image paths each)
+        for ($p = 1; $p <= 4; $p++) {
+            $this->loadKey("pj_{$p}_cat");
+            $this->loadKey("pj_{$p}_title1");
+            $this->loadKey("pj_{$p}_title2");
+            $this->loadKey("pj_{$p}_desc");
+            $this->loadKey("pj_{$p}_long_desc"); // Detailed story for the modal
+            $this->loadKey("pj_{$p}_status");
+
+            for ($img = 1; $img <= 3; $img++) {
+                $imgKey = "pj_{$p}_img{$img}";
+                $this->existing[$imgKey] = Setting::where('key', $imgKey)->first()?->value;
+            }
+        }
     }
 
-    private function loadKey($key) {
+    private function loadKey($key)
+    {
         $setting = Setting::where('key', $key)->first();
         $this->state[$key] = [
             'en' => $setting ? $setting->getTranslation('value', 'en') : '',
@@ -40,34 +54,63 @@ class ManageProjectsPage extends Component
         ];
     }
 
-    public function updated($propertyName) {
+    public function updated($propertyName)
+    {
         $previewData = $this->state;
-        foreach($this->images as $key => $file) {
-            if ($file) $previewData[$key] = $file->temporaryUrl();
+
+        // Temporary preview URLs for uploaded gallery images
+        foreach ($this->images as $key => $file) {
+            if ($file) {
+                $previewData[$key] = $file->temporaryUrl();
+            }
         }
-        $this->dispatch('content-updated', state: $previewData);
+
+        // Target Section and Card detection
+        $targetSection = 'projects-hero';
+        $cardIndex = null;
+
+        if (str_contains($propertyName, 'pj_') && preg_match('/pj_(\d+)/', $propertyName, $matches)) {
+            $targetSection = 'projects-grid';
+            $cardIndex = (int) $matches[1];
+        } elseif (str_contains($propertyName, 'cta')) {
+            $targetSection = 'projects-cta';
+        }
+
+        $this->dispatch('content-updated', [
+            'state' => $previewData,
+            'targetSection' => $targetSection,
+            'cardIndex' => $cardIndex,
+        ]);
     }
 
-    public function save() {
+    public function save()
+    {
+        // 1. Save all text keys
         foreach ($this->state as $key => $translations) {
-            $setting = Setting::updateOrCreate(['key' => $key]);
+            $setting = Setting::firstOrNew(['key' => $key]);
             foreach ($translations as $lang => $val) {
-                $setting->setTranslation('value', $lang, $val);
+                $setting->setTranslation('value', $lang, $val ?? '');
             }
             $setting->save();
         }
 
+        // 2. Save up to 12 Project Images (4 projects * 3 images)
         foreach ($this->images as $key => $file) {
             if ($file) {
                 $path = $file->store('projects', 'public');
-                Setting::updateOrCreate(['key' => $key], ['value' => $path]);
+                $imgSetting = Setting::firstOrNew(['key' => $key]);
+                $imgSetting->setRawAttributes(['key' => $key, 'value' => $path]);
+                $imgSetting->save();
+                $this->existing[$key] = $path;
             }
         }
+        $this->images = [];
 
-        session()->flash('message', 'Project portfolio updated successfully!');
+        session()->flash('message', 'Project portfolio & modal details saved successfully!');
     }
 
-    public function render() {
+    public function render()
+    {
         return view('livewire.manage-projects-page')->layout('components.layouts.admin');
     }
 }

@@ -50,10 +50,7 @@ class ManageVolunteerPage extends Component
             $this->loadKey($key); 
         }
         
-        $imgKeys = ['v_hero_img'];
-        foreach ($imgKeys as $k) { 
-            $this->existing[$k] = Setting::where('key', $k)->first()?->value; 
-        }
+        $this->existing['v_hero_img'] = Setting::where('key', 'v_hero_img')->first()?->value; 
     }
 
     private function loadKey($key)
@@ -69,30 +66,60 @@ class ManageVolunteerPage extends Component
     public function updated($propertyName)
     {
         $previewData = $this->state;
+
         foreach ($this->images as $key => $file) {
             if ($file) {
                 $previewData[$key] = $file->temporaryUrl();
             }
         }
-        $this->dispatch('content-updated', state: $previewData);
+
+        // Section auto-scroll target determination
+        $targetSection = 'volunteer-hero';
+        $cardIndex = null;
+
+        if (str_contains($propertyName, 'youth')) {
+            $targetSection = 'volunteer-youth';
+            if (preg_match('/v_youth_(\d+)/', $propertyName, $matches)) {
+                $cardIndex = (int) $matches[1];
+            }
+        } elseif (str_contains($propertyName, 'form')) {
+            $targetSection = 'volunteer-form';
+        } elseif (str_contains($propertyName, 'footer') || str_contains($propertyName, 'cite')) {
+            $targetSection = 'volunteer-quote';
+        }
+
+        $this->dispatch('content-updated', [
+            'state' => $previewData,
+            'targetSection' => $targetSection,
+            'cardIndex' => $cardIndex,
+        ]);
     }
 
     public function save()
     {
+        // 1. Save text fields
         foreach ($this->state as $key => $translations) {
-            $setting = Setting::updateOrCreate(['key' => $key]);
+            $setting = Setting::firstOrNew(['key' => $key]);
             foreach ($translations as $lang => $val) {
-                $setting->setTranslation('value', $lang, $val);
+                $setting->setTranslation('value', $lang, $val ?? '');
             }
             $setting->save();
         }
 
+        // 2. Save Hero Image with setRawAttributes
         foreach ($this->images as $key => $file) {
             if ($file) {
                 $path = $file->store('volunteer', 'public');
-                Setting::updateOrCreate(['key' => $key], ['value' => $path]);
+                $imgSetting = Setting::firstOrNew(['key' => $key]);
+                $imgSetting->setRawAttributes([
+                    'key' => $key,
+                    'value' => $path,
+                ]);
+                $imgSetting->save();
+                $this->existing[$key] = $path;
             }
         }
+        $this->images = [];
 
         session()->flash('message', 'Volunteer page content successfully published!');
     }

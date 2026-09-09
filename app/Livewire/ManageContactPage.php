@@ -27,12 +27,16 @@ class ManageContactPage extends Component
         'ct_form_title', 'ct_form_btn'
     ];
 
-    public function mount() {
-        foreach ($this->textKeys as $key) { $this->loadKey($key); }
+    public function mount()
+    {
+        foreach ($this->textKeys as $key) { 
+            $this->loadKey($key); 
+        }
         $this->existing['ct_form_img'] = Setting::where('key', 'ct_form_img')->first()?->value;
     }
 
-    private function loadKey($key) {
+    private function loadKey($key)
+    {
         $setting = Setting::where('key', $key)->first();
         $this->state[$key] = [
             'en' => $setting ? $setting->getTranslation('value', 'en') : '',
@@ -41,32 +45,66 @@ class ManageContactPage extends Component
         ];
     }
 
-    public function updated($propertyName) {
+    public function updated($propertyName)
+    {
         $previewData = $this->state;
-        if ($this->form_image) {
-            $previewData['ct_form_img'] = $this->form_image->temporaryUrl();
+
+        $previewData['ct_form_img'] = $this->form_image 
+            ? $this->form_image->temporaryUrl() 
+            : ($this->existing['ct_form_img'] ?? null);
+
+        // Section auto-scroll target
+        $targetSection = 'contact-hero';
+        if (str_contains($propertyName, 'crisis')) {
+            $targetSection = 'contact-crisis';
+        } elseif (str_contains($propertyName, 'ct_g')) {
+            $targetSection = 'contact-cards';
+        } elseif (str_contains($propertyName, 'form')) {
+            $targetSection = 'contact-form';
         }
-        $this->dispatch('content-updated', state: $previewData);
+
+        $this->dispatch('content-updated', [
+            'state' => $previewData,
+            'targetSection' => $targetSection,
+        ]);
     }
 
-    public function save() {
+    public function save()
+    {
+        // 1. Save text fields
         foreach ($this->state as $key => $translations) {
-            $setting = Setting::updateOrCreate(['key' => $key]);
+            $setting = Setting::firstOrNew(['key' => $key]);
             foreach ($translations as $lang => $val) {
-                $setting->setTranslation('value', $lang, $val);
+                $setting->setTranslation('value', $lang, $val ?? '');
             }
             $setting->save();
         }
 
+        // 2. Save Form Image
         if ($this->form_image) {
             $path = $this->form_image->store('contact', 'public');
-            Setting::updateOrCreate(['key' => 'ct_form_img'], ['value' => $path]);
+            Setting::updateOrCreate(
+                ['key' => 'ct_form_img'],
+                ['value' => $path]
+            );
+            $this->existing['ct_form_img'] = $path;
+            $this->form_image = null;
         }
 
-        session()->flash('message', 'Contact desk configuration published!');
+        $previewData = $this->state;
+        $previewData['ct_form_img'] = $this->existing['ct_form_img'] ?? null;
+
+        $this->dispatch('content-updated', [
+            'state' => $previewData,
+            'targetSection' => 'contact-hero',
+        ]);
+        $this->dispatch('reload-settings');
+
+        session()->flash('message', 'Contact desk configuration published successfully!');
     }
 
-    public function render() {
+    public function render()
+    {
         return view('livewire.manage-contact-page')->layout('components.layouts.admin');
     }
 }
