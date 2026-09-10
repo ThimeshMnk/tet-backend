@@ -11,7 +11,7 @@ class ManageProjectsPage extends Component
     use WithFileUploads;
 
     public $state = [];
-    public $images = []; // Holds uploaded files: e.g. images['pj_1_img1']
+    public $images = []; 
     public $existing = [];
 
     protected $textKeys = [
@@ -28,13 +28,12 @@ class ManageProjectsPage extends Component
             $this->loadKey($key); 
         }
 
-        // 2. Load 4 Projects (Text fields + 3 image paths each)
         for ($p = 1; $p <= 4; $p++) {
             $this->loadKey("pj_{$p}_cat");
             $this->loadKey("pj_{$p}_title1");
             $this->loadKey("pj_{$p}_title2");
             $this->loadKey("pj_{$p}_desc");
-            $this->loadKey("pj_{$p}_long_desc"); // Detailed story for the modal
+            $this->loadKey("pj_{$p}_long_desc"); 
             $this->loadKey("pj_{$p}_status");
 
             for ($img = 1; $img <= 3; $img++) {
@@ -85,7 +84,6 @@ class ManageProjectsPage extends Component
 
     public function save()
     {
-        // 1. Save all text keys
         foreach ($this->state as $key => $translations) {
             $setting = Setting::firstOrNew(['key' => $key]);
             foreach ($translations as $lang => $val) {
@@ -94,7 +92,6 @@ class ManageProjectsPage extends Component
             $setting->save();
         }
 
-        // 2. Save up to 12 Project Images (4 projects * 3 images)
         foreach ($this->images as $key => $file) {
             if ($file) {
                 $path = $file->store('projects', 'public');

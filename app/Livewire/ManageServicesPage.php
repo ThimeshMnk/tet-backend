@@ -68,7 +68,6 @@ class ManageServicesPage extends Component
     {
         $previewData = array_merge($this->state, $this->urls);
 
-        // 1. If currently uploading a new image, use temporary URL. Otherwise, use saved path!
         $previewData['service_hero_bg'] = $this->hero_bg 
             ? $this->hero_bg->temporaryUrl() 
             : ($this->existing['hero_bg'] ?? null);
@@ -79,7 +78,6 @@ class ManageServicesPage extends Component
                 : ($this->existing["service_{$i}_img"] ?? null);
         }
 
-        // Target Section Auto-Detection
         $targetSection = 'services-hero';
         $cardIndex = null;
 
@@ -112,7 +110,6 @@ class ManageServicesPage extends Component
             $setting->save();
         }
 
-        // 2. Save URLs cleanly with updateOrCreate
         foreach ($this->urls as $key => $val) {
             Setting::updateOrCreate(
                 ['key' => $key],
@@ -120,7 +117,6 @@ class ManageServicesPage extends Component
             );
         }
 
-        // 3. Save Hero Background with updateOrCreate (Preserves ID!)
         if ($this->hero_bg) {
             $path = $this->hero_bg->store('services', 'public');
             
@@ -148,7 +144,6 @@ class ManageServicesPage extends Component
         }
         $this->service_images = [];
 
-        // Dispatch updated persistent state to preview iframe
         $previewData = array_merge($this->state, $this->urls);
         $previewData['service_hero_bg'] = $this->existing['hero_bg'] ?? null;
         for ($i = 1; $i <= 6; $i++) {

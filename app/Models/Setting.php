@@ -13,10 +13,7 @@ class Setting extends Model
 
     public $translatable = ['value'];
 
-    /**
-     * Determine whether an attribute should be translated by Spatie.
-     * Raw URLs, image paths, and JSON arrays are excluded so they remain clean strings/arrays.
-     */
+   
     public function isTranslatableAttribute(string $key): bool
     {
         if ($key !== 'value') {
@@ -25,7 +22,6 @@ class Setting extends Model
 
         $settingKey = $this->getAttribute('key');
 
-        // Whitelist all 12 project gallery image slots (4 projects * 3 images)
         $projectImages = [];
         for ($p = 1; $p <= 4; $p++) {
             for ($img = 1; $img <= 3; $img++) {
@@ -80,7 +76,6 @@ class Setting extends Model
             'ct_form_img',
         ], $projectImages);
 
-        // If this key is an image, URL, or raw array, do NOT wrap it in translations
         if ($settingKey && in_array($settingKey, $nonTranslatable, true)) {
             return false;
         }

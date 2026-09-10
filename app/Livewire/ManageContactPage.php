@@ -53,7 +53,6 @@ class ManageContactPage extends Component
             ? $this->form_image->temporaryUrl() 
             : ($this->existing['ct_form_img'] ?? null);
 
-        // Section auto-scroll target
         $targetSection = 'contact-hero';
         if (str_contains($propertyName, 'crisis')) {
             $targetSection = 'contact-crisis';

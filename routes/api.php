@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\DonationController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\EnterpriseInquiryController;
 use App\Http\Controllers\Api\ContactController;
+use App\Http\Controllers\Api\SitemapController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -21,3 +22,4 @@ Route::post('/donations', [DonationController::class, 'store']);
 Route::get('/products', [ProductController::class, 'index']);
 Route::post('/inquiries', [EnterpriseInquiryController::class, 'store']);
 Route::post('/contact', [ContactController::class, 'store']);
+Route::get('/sitemap-urls', [SitemapController::class, 'index']);

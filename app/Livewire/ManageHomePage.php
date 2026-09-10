@@ -17,7 +17,7 @@ class ManageHomePage extends Component
 
     // 8 Carousel Cards State & Uploads
     public $impact_cards = [];
-    public $impact_card_images = []; // Holds temporary uploaded files for each card
+    public $impact_card_images = []; 
 
     protected $textKeys = [
         'hero_top_label', 'hero_title_1', 'hero_title_2', 'hero_description',
@@ -134,7 +134,6 @@ class ManageHomePage extends Component
 
         if (str_contains($propertyName, 'impact') || str_contains($propertyName, 'view_journal')) {
             $targetSection = 'section-impact';
-            // If editing a specific card (e.g. impact_cards.2.title.en or impact_card_images.2)
             if (preg_match('/impact_card[s|_images]*\.(\d+)/', $propertyName, $matches)) {
                 $slideIndex = (int) $matches[1];
             }
@@ -144,7 +143,6 @@ class ManageHomePage extends Component
             $targetSection = 'section-story';
         }
 
-        // Dispatch preview state along with targeted scroll section and slide
         $this->dispatch('content-updated', [
             'state' => $previewData,
             'targetSection' => $targetSection,
@@ -154,7 +152,6 @@ class ManageHomePage extends Component
 
   public function save()
     {
-        // 1. Save text fields with trilingual translations
         foreach ($this->state as $key => $translations) {
             $setting = Setting::firstOrNew(['key' => $key]);
             foreach ($translations as $lang => $val) {
@@ -173,16 +170,14 @@ class ManageHomePage extends Component
             $urlSetting->save();
         }
 
-        // 3. Upload and save 8 Carousel Card Images
         foreach ($this->impact_card_images as $idx => $file) {
             if ($file) {
                 $path = $file->store('homepage/impact', 'public');
                 $this->impact_cards[$idx]['image'] = $path;
             }
         }
-        $this->impact_card_images = []; // reset file upload inputs
+        $this->impact_card_images = [];
 
-        // 👇 SAVE AS RAW JSON (Bypasses Spatie wrapping it into {"en": [...]})
         $cardSetting = Setting::firstOrNew(['key' => 'impact_cards']);
         $cardSetting->setRawAttributes([
             'key' => 'impact_cards',

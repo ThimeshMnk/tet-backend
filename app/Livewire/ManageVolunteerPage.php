@@ -106,7 +106,6 @@ class ManageVolunteerPage extends Component
             $setting->save();
         }
 
-        // 2. Save Hero Image with setRawAttributes
         foreach ($this->images as $key => $file) {
             if ($file) {
                 $path = $file->store('volunteer', 'public');

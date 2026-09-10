@@ -38,7 +38,6 @@ class ManageGeneralSettings extends Component
     }
 
     public function render() {
-        // This tells Livewire to use our custom admin layout
         return view('livewire.manage-general-settings')
             ->layout('components.layouts.admin');
     }
