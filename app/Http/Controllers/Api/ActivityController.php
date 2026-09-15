@@ -15,7 +15,7 @@ class ActivityController extends Controller
             return Activity::where('is_published', true)
                 ->orderBy('order', 'asc')
                 ->get()
-                ->map(function ($act) {
+                ->map(function (Activity $act) {
                     return [
                         'id' => $act->id,
                         'title' => $act->getTranslations('title'),
@@ -25,7 +25,9 @@ class ActivityController extends Controller
                         'fullStory' => $act->getTranslations('full_story'),
                         'img' => $act->image,
                     ];
-                });
+                })
+                ->values()
+                ->all();
         });
 
         return response()->json($activities);
