@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\Activity;
 use App\Models\Setting;
+use Illuminate\Support\Facades\Cache;
 
 class ManageNewsPage extends Component
 {
@@ -14,7 +15,7 @@ class ManageNewsPage extends Component
     // Header State
     public $state = [];
 
-    // Active Activity Editing (Category removed, Title is primary)
+    // Active Activity Editing
     public $editingId = null;
     public $activityState = [
         'title' => ['en' => '', 'si' => '', 'ta' => ''],
@@ -27,7 +28,10 @@ class ManageNewsPage extends Component
     public $existingActivityImage;
 
     protected $headerKeys = [
-        'act_hero_label', 'act_hero_title1', 'act_hero_title2', 'act_hero_desc'
+        'act_hero_label',
+        'act_hero_title1',
+        'act_hero_title2',
+        'act_hero_desc'
     ];
 
     public function mount()
@@ -108,6 +112,13 @@ class ManageNewsPage extends Component
     // 💾 Save Activity
     public function saveActivity()
     {
+        // 1. Validate Upload
+        if ($this->activityImage) {
+            $this->validate([
+                'activityImage' => 'image|max:10240', // 10MB limit
+            ]);
+        }
+
         if ($this->editingId === 'new') {
             $act = new Activity();
             $act->order = (Activity::max('order') ?? 0) + 1;
@@ -123,13 +134,16 @@ class ManageNewsPage extends Component
         }
         $act->date = $this->activityState['date'] ?? 'Today';
 
+        // 2. Persist File Path
         if ($this->activityImage) {
             $act->image = $this->activityImage->store('news', 'public');
         }
 
         $act->save();
+
         $this->editingId = null;
         $this->activityImage = null;
+        $this->existingActivityImage = null;
 
         session()->flash('message', 'Activity successfully saved!');
         $this->dispatch('reload-frontend-collection');
@@ -153,11 +167,20 @@ class ManageNewsPage extends Component
             }
             $setting->save();
         }
+
+        // Flush API cache immediately
+        Cache::forget('api_settings_map');
+
         session()->flash('message', 'Header settings published!');
     }
 
     public function updated($propertyName)
     {
+        // Ignore file upload internal state triggers for frontend preview updates
+        if (str_starts_with($propertyName, 'activityImage')) {
+            return;
+        }
+
         $previewData = $this->state;
         $this->dispatch('content-updated', [
             'state' => $previewData,
